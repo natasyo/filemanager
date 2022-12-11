@@ -1,0 +1,9 @@
+{
+  "name": "filemanager",
+  "version": "0.0.0",
+  "description": "filemanager",
+  "main": "app.js",
+  "author": {
+    "name": ""
+  }
+}
