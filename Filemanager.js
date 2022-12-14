@@ -1,7 +1,7 @@
 ("use strict");
 import os from "os";
 import { createReadStream, appendFile, createWriteStream } from "fs";
-import { readdir, access, constants, rename } from "fs/promises";
+import { readdir, access, constants, rename, unlink } from "fs/promises";
 import * as path from "path";
 
 const INVALID_INPUT = "Invalid input";
@@ -19,11 +19,14 @@ class Filemanager {
             .catch((err) => {
                 console.log(err);
             });
+        process.stdout.write(
+            `Welcome to the File Manager, ${this.username}!\n`
+        );
     }
     async setCurrentDir(path) {
         this.currentDir = path;
         this.currentFiles = await readdir(path, { withFileTypes: true });
-        process.stdout.write(`You are currently in ${this.currentDir}\n`);
+        process.stdout.write(`You are currently in ${this.currentDir}>`);
     }
     ls(files) {
         if (!files) files = this.currentFiles;
@@ -92,6 +95,9 @@ class Filemanager {
             process.stdout.write(e.message);
         }
     }
+    static showError(err) {
+        process.stdout.write(` ${err.message}`);
+    }
     async cp(pathToFile, pathNewDirectory) {
         try {
             if (arguments.length !== 2) {
@@ -104,28 +110,70 @@ class Filemanager {
                 path.basename(pathToFile)
             );
             const readStream = createReadStream(pathFile);
-            readStream.on("error", (err) => {
-                if (!err) {
-                    const writeStream = createWriteStream(newPathFile);
-                    readStream.pipe(writeStream).on("error", (err) => {
-                        process.stdout.write(`${err.message}\n`);
-                    });
-                } else {
-                    process.stdout.write(`${err.message}\n`);
-                }
-            });
+            const writeStream = createWriteStream(newPathFile);
+            readStream
+                .on("error", Filemanager.showError)
+                .pipe(
+                    writeStream
+                        .on("finish", () => {
+                            process.stdout.write(
+                                `file ${path.basename(
+                                    pathToFile
+                                )} copied successfully`
+                            );
+                        })
+                        .on("error", Filemanager.showError)
+                )
+                .on("error", Filemanager.showError);
         } catch (e) {
             process.stdout.write(`${e.message}\n`);
         }
     }
     async mv(pathToFile, pathNewDirectory) {
         try {
-            if (await this.cp(pathToFile, pathNewDirectory)) {
-                console.log("ok");
+            if (arguments.length !== 2) {
+                process.stdout.write(`${INVALID_INPUT}\n`);
+                return;
             }
+            const pathFile = path.resolve(this.currentDir, pathToFile);
+            const newPathFile = path.join(
+                path.resolve(this.currentDir, pathNewDirectory),
+                path.basename(pathToFile)
+            );
+            const readStream = createReadStream(pathFile);
+            const writeStream = createWriteStream(newPathFile);
+            readStream
+                .on("error", Filemanager.showError)
+                .pipe(
+                    writeStream
+                        .on("finish", () => {
+                            process.stdout.write(
+                                `file ${path.basename(
+                                    pathToFile
+                                )} moved successfully\n`
+                            );
+                            unlink(pathFile).catch(Filemanager.showError);
+                        })
+                        .on("error", Filemanager.showError)
+                )
+                .on("error", Filemanager.showError);
         } catch (e) {
             process.stdout.write(`${e.message}\n`);
         }
+    }
+    async rm(fileName) {
+        if (arguments.length !== 1) {
+            process.stdout.write(`${INVALID_INPUT}\n`);
+            return 0;
+        }
+        unlink(fileName)
+            .then(() => {
+                process.stdout.write(
+                    `file ${path.basename(fileName)} removed successfully\n`
+                );
+            })
+            .catch(Filemanager.showError);
+        return 0;
     }
 }
 
