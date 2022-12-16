@@ -1,14 +1,16 @@
 "use strict";
+import Constants from "./Constants.js";
 import Filemanager from "./Filemanager.js";
 import OS from "./os.js";
+import ZIP from "./zip.js";
 
 let filemanager = new Filemanager();
 
 process.on("SIGINT", () => {
     process.stdout.write(
-        `Thank you for using File Manager, ${filemanager.username}, goodbye!\n`
+        `\nThank you for using File Manager, ${filemanager.username}, goodbye!\n`
     );
-    process.exit();
+    process.exit(0);
 });
 
 process.stdin.on("data", async (data) => {
@@ -16,6 +18,11 @@ process.stdin.on("data", async (data) => {
         let str = data.toString();
         str = str.trim().split(" ");
         let command = str[0];
+        if (command === "exit") {
+            process.exit(0);
+            `\nThank you for using File Manager, ${filemanager.username}, goodbye!\n`;
+            return;
+        }
         if (
             command === "os" &&
             str.length === 2 &&
@@ -28,18 +35,20 @@ process.stdin.on("data", async (data) => {
         } else {
             str.shift();
             try {
-                if (typeof filemanager[command] === "function") {
+                if (command === "compress" || command === "decompress") {
+                    ZIP.currentDir = filemanager.currentDir;
+                    if (typeof ZIP[command] === "function") {
+                        await ZIP[command](...str);
+                    }
+                } else if (typeof filemanager[command] === "function") {
                     filemanager[command](...str);
                 } else {
-                    process.stdout.write("Invalid input\n");
+                    process.stdout.write(`${Constants.INVALID_INPUT}\n`);
                 }
             } catch (e) {
                 process.stdout.write(e);
             }
         }
-        process.stdout.write(
-            `You are currently in ${filemanager.currentDir} > `
-        );
     } catch (e) {
         Filemanager.showError(e);
     }

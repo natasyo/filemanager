@@ -8,6 +8,7 @@ export default class OS {
     }
     static homedir() {
         process.stdout.write(`${os.homedir()}\n`);
+        return os.homedir();
     }
     static username() {
         process.stdout.write(`${os.userInfo().username}\n`);
