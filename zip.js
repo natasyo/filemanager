@@ -4,21 +4,21 @@ import * as path from "path";
 import zlib from "zlib";
 import Check from "./Check.js";
 import Constants from "./Constants.js";
-import OS from "./os.js";
+import Filemanager from "./Filemanager.js";
 
 export default class ZIP {
-    constructor() {
-        ZIP.currentDir = OS.homedir();
-    }
-
     static async compress(path_to_file, path_to_destination) {
         if (arguments.length !== 2) {
             process.stdout.write(`${Constants.INVALID_INPUT} \n`);
+            Filemanager.showCurrentDir();
             return 0;
         }
         try {
-            const file = path.resolve(ZIP.currentDir, path_to_file);
-            const rar = path.resolve(ZIP.currentDir, path_to_destination);
+            const file = path.resolve(Filemanager.currentDir, path_to_file);
+            const rar = path.resolve(
+                Filemanager.currentDir,
+                path_to_destination
+            );
             fs.exists(rar, async (exists) => {
                 if (!exists) {
                     await mkdir(rar);
@@ -32,6 +32,7 @@ export default class ZIP {
 
                 stream.on("finish", () => {
                     console.log("Done compressing 😎");
+                    Filemanager.setCurrentDir();
                 });
             });
         } catch (e) {
@@ -41,12 +42,13 @@ export default class ZIP {
     static decompress(path_to_file, path_to_destination) {
         if (arguments.length !== 2) {
             process.stdout.write(`${Constants.INVALID_INPUT}\n`);
+            Filemanager.showCurrentDir();
             return 0;
         }
         try {
-            const fileRar = path.resolve(ZIP.currentDir, path_to_file);
+            const fileRar = path.resolve(Filemanager.currentDir, path_to_file);
             const pathToFile = path.resolve(
-                ZIP.currentDir,
+                Filemanager.currentDir,
                 path_to_destination
             );
 
@@ -68,6 +70,7 @@ export default class ZIP {
                 const stream = readStream.pipe(brotli).pipe(writeStream);
                 stream.on("finish", () => {
                     console.log("Done decompressing 😎");
+                    Filemanager.showCurrentDir();
                 });
             });
         } catch (e) {

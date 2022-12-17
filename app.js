@@ -1,4 +1,5 @@
 "use strict";
+import Check from "./Check.js";
 import Constants from "./Constants.js";
 import Filemanager from "./Filemanager.js";
 import OS from "./os.js";
@@ -44,12 +45,14 @@ process.stdin.on("data", async (data) => {
                     filemanager[command](...str);
                 } else {
                     process.stdout.write(`${Constants.INVALID_INPUT}\n`);
+                    Filemanager.showCurrentDir();
                 }
             } catch (e) {
                 process.stdout.write(e);
+                Filemanager.showCurrentDir();
             }
         }
     } catch (e) {
-        Filemanager.showError(e);
+        Check.showError(e);
     }
 });
