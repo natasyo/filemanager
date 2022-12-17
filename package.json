@@ -3,6 +3,10 @@
   "version": "0.0.0",
   "description": "filemanager",
   "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node app.js"
+  },
   "author": {
     "name": ""
   }
